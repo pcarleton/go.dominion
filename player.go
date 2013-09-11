@@ -6,14 +6,14 @@ import (
 
 type Player struct {
   Name string
-  Deck []Card
-  Discard []Card
-  Hand []Card
+  Deck Pile
+  Discard Pile
+  Hand Pile
+  Plan Strat
 }
 
-
 func (p *Player) Gain(card Card) {
-  p.Discard = append(p.Discard, card)
+  p.Discard.Add(card)
 }
 
 func (p *Player) Points() int {
@@ -26,6 +26,29 @@ func (p *Player) Points() int {
   }
   return score
 }
+
+func (p *Player) draw() {
+  p.Hand.Add(p.Deck.Pop())
+}
+
+func (p *Player) Draw(num int) {
+  for i := 0; i < num; i++ {
+    if len(p.Deck) == 0 {
+      p.Deck = p.Discard
+      p.Discard = nil
+      p.Deck.Shuffle()
+    }
+    p.draw()
+  }
+}
+
+func (p *Player) discard(cards Pile) {
+  
+
+}
+
+
+
 
 func (p *Player) Cards() []Card {
   return append(p.Deck, p.Discard...)
