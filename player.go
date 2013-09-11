@@ -1,11 +1,16 @@
 package dominion
 
+import (
+  "fmt"
+)
+
 type Player struct {
   Name string
   Deck []Card
   Discard []Card
   Hand []Card
 }
+
 
 func (p *Player) Gain(card Card) {
   p.Discard = append(p.Discard, card)
