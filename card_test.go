@@ -30,3 +30,14 @@ func TestPop(t *testing.T) {
     t.Error("Pop didn't work")
   }
 }
+
+func TestRemove(t *testing.T) {
+  deck := startingDeck()
+  card := deck.Remove(Copper)
+  if card.Name != "Copper" {
+    t.Errorf("Removed %v instead of copper", card)
+  }
+  if deck.Len() != 9 {
+    t.Errorf("Did not remove card from deck.")
+  }
+}

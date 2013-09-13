@@ -12,6 +12,8 @@ type Player struct {
   Plan Strat
 }
 
+type Strat interface{}
+
 func (p *Player) Gain(card Card) {
   p.Discard.Add(card)
 }
@@ -42,8 +44,7 @@ func (p *Player) Draw(num int) {
   }
 }
 
-func (p *Player) discard(cards Pile) {
-  
+func (p *Player) DoDiscard(cards Pile) {
 
 }
 
