@@ -49,22 +49,84 @@ func (p *Player) DoDiscard(cards Pile) {
 }
 
 func (p *Player) PlayTurn(game *Game) {
-  t := Turn{P:p, G:g, Actions:1, Buys:1}  
-  p.DoActionPhase(t)
+  t := Turn{P:p, G:game, Actions:2, Buys:2}  
+  p.DoActionPhase(&t)
+  p.DoBuyPhase(&t)
+  p.DoCleanUp()
+}
 
+func (p *Player) PrintHand() {
+  p.Hand.Sort()
+  for _, card := range(p.Hand) {
+    fmt.Printf("%s ", card.Name)
+  }
+  fmt.Printf("\n")
+}
+
+func (p *Player) DoBuyPhase(turn *Turn) {
+  fmt.Println("****Buy Phase****")
+  p.PrintHand()
+  monies := 0
+  for _, card := range(p.Hand) {
+    monies += card.CoinValue
+  }
+  // For now, only do 1 buy.
+  fmt.Printf("Coins: %d, Buys: %d", monies, turn.Buys)
+  fmt.Println("#  Name   Available    Price")
+  i := 0
+  options := []string{}
+  for card, count := range(turn.G.Stacks) {
+    if count > 0 {
+      fmt.Printf("%d. %s: %d %d\n", i, card, count, BaseCards[card].CoinPrice)
+      options = append(options, card)
+      i++
+    }
+  }
+  done := false
+  for !done {
+    selection := GetSelection(i)
+    selected := BaseCards[options[selection]]
+    if (selected.CoinPrice <= monies) {
+      turn.G.Stacks[selected.Name]--
+      p.Gain(selected)
+      done = true
+    } else {
+      fmt.Println("You don't have enough money for that card.")
+    }
+  }
 }
 
 func (p *Player) DoActionPhase(turn *Turn) {
-  // Get all actions from hand
-  actionCards := Pile{}
-  for _, card := range p.Hand {
-    if card.Type == ACTION {
-      actionCards.Add(card)
+  fmt.Println("****Action Phase****")
+  played := Pile{}
+  for ; turn.Actions > 0; {
+    // Get all actions from hand
+    fmt.Printf("Actions Left: %d", turn.Actions)
+    p.PrintHand()
+    actionCards := Pile{}
+    for _, card := range p.Hand {
+      if card.Type == ACTION {
+        actionCards.Add(card)
+      }
     }
+    if actionCards.Len() == 0  {
+      fmt.Println("No actions to play.")
+      return
+    }
+    // Choose an action.
+    fmt.Println("Select Action to play")
+    actionCard := SelectCard(actionCards)
+    actionCard.playAction(turn)
+    turn.Actions--
+    played.Add(p.Hand.Remove(actionCard))
   }
-  // Choose an action.
-  actionCard := SelectCard(actionCards)
-  actionCard.playAction(
+  p.Hand.AddAll(played)
+}
+
+func (p *Player) DoCleanUp() {
+  p.Discard.AddAll(p.Hand)
+  p.Hand = nil
+  p.Draw(5)
 }
 
 func SelectCard(pile Pile) Card{
@@ -86,19 +148,7 @@ func GetSelection(opts int) int {
   return choice
 }
 
-func (p *Player) Cards() []Card {
-  return append(p.Deck, p.Discard...)
-}
-
-func (p *Player) DeckCounts() (countMap map[string]int) {
-  countMap = map[string]int{}
-  for _, card := range p.Cards() {
-    countMap[card.Name]++
-  }
-  return countMap
-}
-
 func (p *Player) String() string {
-  return fmt.Sprintf("Player %s-> VP: %d Counts:%v\n Deck: %v Discard: %v", p.Name, p.Points(), p.DeckCounts(), p.Deck, p.Discard)
+  return fmt.Sprintf("Player %s-> VP: %d Deck: %v Discard: %v", p.Name, p.Points(), p.Deck, p.Discard)
 }
 

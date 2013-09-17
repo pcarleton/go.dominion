@@ -3,6 +3,7 @@ package dominion
 import (
   "math/rand"
   "log"
+  "sort"
 )
 
 type CardType int
@@ -24,23 +25,18 @@ type Card struct {
 // playAction looks up the action function associated with a cards
 // name and executes it in the context of the provided Turn.
 func (c Card) playAction(turn *Turn) {
-  if (c.Type != Action) {
-    log.Error("Card is not an action card")
-    return
+  if (c.Type != ACTION) {
+    log.Fatal("Card is not an action card")
   }
   ActionFunctions[c.Name](turn)
 }
+
 
 type Turn struct {
   P *Player
   G *Game
   Actions int
   Buys int
-}
-
-type Game struct {
-  Players []Player
-  Stacks map[string] int
 }
 
 type Pile []Card
@@ -85,15 +81,24 @@ func (p Pile) Swap(i, j int) {
   p[i], p[j] = p[j], p[i]
 }
 
+func (p Pile) Less(i, j int) bool {
+  return p[i].Type < p[j].Type || p[i].CoinPrice < p[j].CoinPrice || p[i].Name < p[j].Name
+}
+
+func (p *Pile) Sort() {
+  sort.Sort(p)
+}
+
 //Adds the specified card to the end of the pile.
 func (p *Pile) Add(card Card) {
   s := *p
   *p = append(s, card)
 }
 
-var Copper = Card{"Copper", 0, 1, 0, TREASURE}
-var Estate = Card{"Estate", 1, 0, 2, VICTORY}
-var Smithy = Card{"Smithy", 0, 0, 4, ACTION}
+func (p *Pile) AddAll(other Pile) {
+  s := *p
+  *p = append(s, other...)
+}
 
 func StartingDeck() Pile {
   var deck Pile
@@ -106,10 +111,10 @@ func StartingDeck() Pile {
   return deck
 }
 
-func smithyFunc(p *Player) {
-  p.Draw(3)  
+func smithyFunc(turn *Turn) {
+  turn.P.Draw(3)  
 }
 
-var ActionFunctions = map[string](func(*Player)){
+var ActionFunctions = map[string](func(*Turn)){
   "Smithy": smithyFunc,
 }
