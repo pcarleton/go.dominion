@@ -34,7 +34,11 @@ func TestDraw(t *testing.T) {
   if player.Deck.Len() != 1 || player.Hand.Len() != 3 || player.Discard.Len() != 0 {
     t.Errorf("Didn't draw with shuffle correctly: %v, %v, %v", player.Deck, player.Hand, player.Discard)
   }
+}
 
-  
-
+func TestSelection(t *testing.T) {
+  c := GetSelection(3)
+  if c == -1 {
+    t.Errorf("Error\n")
+  }
 }

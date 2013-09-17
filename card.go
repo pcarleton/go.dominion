@@ -2,6 +2,7 @@ package dominion
 
 import (
   "math/rand"
+  "log"
 )
 
 type CardType int
@@ -20,17 +21,27 @@ type Card struct {
   Type CardType
 }
 
+// playAction looks up the action function associated with a cards
+// name and executes it in the context of the provided Turn.
+func (c Card) playAction(turn *Turn) {
+  if (c.Type != Action) {
+    log.Error("Card is not an action card")
+    return
+  }
+  ActionFunctions[c.Name](turn)
+}
+
+type Turn struct {
+  P *Player
+  G *Game
+  Actions int
+  Buys int
+}
+
 type Game struct {
-  players []Player
+  Players []Player
+  Stacks map[string] int
 }
-
-type Action interface{
-  Play(*Game) 
-}
-
-type ActionCard Card
-
-
 
 type Pile []Card
 
@@ -82,8 +93,9 @@ func (p *Pile) Add(card Card) {
 
 var Copper = Card{"Copper", 0, 1, 0, TREASURE}
 var Estate = Card{"Estate", 1, 0, 2, VICTORY}
+var Smithy = Card{"Smithy", 0, 0, 4, ACTION}
 
-func startingDeck() Pile {
+func StartingDeck() Pile {
   var deck Pile
   for i := 0; i < 7; i++ {
     deck.Add(Copper)
@@ -92,4 +104,12 @@ func startingDeck() Pile {
     deck.Add(Estate) 
   }
   return deck
+}
+
+func smithyFunc(p *Player) {
+  p.Draw(3)  
+}
+
+var ActionFunctions = map[string](func(*Player)){
+  "Smithy": smithyFunc,
 }
