@@ -4,15 +4,19 @@ import (
   "math/rand"
   "log"
   "sort"
+  "time"
+  //"fmt"
 )
 
 type CardType int
+
 const (
   TREASURE CardType = iota
   VICTORY
   ACTION
 )
 
+var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 type Card struct {
   Name string
@@ -59,7 +63,7 @@ func (p *Pile) Len() int {
 // Shuffles the pile of cards randomly.
 func (p *Pile) Shuffle() {
   for i := p.Len() - 1; i > 0; i-- {
-    if j := rand.Intn(i + 1); i != j {
+    if j := r.Intn(i + 1); i != j {
       p.Swap(i, j)
     }
   }
@@ -77,8 +81,14 @@ func (p *Pile) Remove(target Card) Card {
   return Card{}
 }
 
-func (p Pile) Swap(i, j int) {
-  p[i], p[j] = p[j], p[i]
+func (p *Pile) Swap(i, j int) {
+  s := *p
+  //fmt.Printf("i: %d, j: %d\n", i, j)
+  //fmt.Printf("s[i]: %v, s[j] %v\n", s[i], s[j])
+  s[i], s[j] = s[j], s[i]
+  //fmt.Printf("s[i]: %v, s[j] %v\n", s[i], s[j])
+  *p = s
+  //fmt.Println(p)
 }
 
 func (p Pile) Less(i, j int) bool {
@@ -87,6 +97,16 @@ func (p Pile) Less(i, j int) bool {
 
 func (p *Pile) Sort() {
   sort.Sort(p)
+}
+
+func (p Pile) Count(cardName string) int {
+  count := 0
+  for _, card := range p {
+    if card.Name == cardName {
+      count++
+    }
+  }
+  return count
 }
 
 //Adds the specified card to the end of the pile.
@@ -98,23 +118,4 @@ func (p *Pile) Add(card Card) {
 func (p *Pile) AddAll(other Pile) {
   s := *p
   *p = append(s, other...)
-}
-
-func StartingDeck() Pile {
-  var deck Pile
-  for i := 0; i < 7; i++ {
-    deck.Add(Copper)
-  }
-  for i := 0; i < 3; i++ {
-    deck.Add(Estate) 
-  }
-  return deck
-}
-
-func smithyFunc(turn *Turn) {
-  turn.P.Draw(3)  
-}
-
-var ActionFunctions = map[string](func(*Turn)){
-  "Smithy": smithyFunc,
 }

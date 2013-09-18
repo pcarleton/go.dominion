@@ -5,6 +5,13 @@ import (
   "fmt"
 )
 
+type BuyFunc func(i int,t *Turn) Card
+
+type Strat struct {
+  Name string
+  Buy BuyFunc
+}
+
 type Player struct {
   Name string
   Deck Pile
@@ -13,7 +20,23 @@ type Player struct {
   Plan Strat
 }
 
-type Strat interface{}
+
+
+var HumanStrat = Strat{ Buy:HumanSelect }
+var BigMoneyStrat = Strat{ Buy:RobotSelect }
+var BMSStrat = Strat{ Buy:BMSSelect }
+
+func NewHumanPlayer(name string) Player {
+  return Player{Name: name, Plan: HumanStrat}
+}
+
+func NewBMSPlayer(name string) Player {
+  return Player{Name: name, Plan: BMSStrat}
+}
+
+func NewRobotPlayer(name string) Player {
+  return Player{Name: name, Plan: BigMoneyStrat}
+}
 
 func (p *Player) Gain(card Card) {
   p.Discard.Add(card)
@@ -49,7 +72,8 @@ func (p *Player) DoDiscard(cards Pile) {
 }
 
 func (p *Player) PlayTurn(game *Game) {
-  t := Turn{P:p, G:game, Actions:2, Buys:2}  
+  fmt.Printf("#### %s ####\n", p.Name)
+  t := Turn{P:p, G:game, Actions:1, Buys:1}  
   p.DoActionPhase(&t)
   p.DoBuyPhase(&t)
   p.DoCleanUp()
@@ -71,7 +95,59 @@ func (p *Player) DoBuyPhase(turn *Turn) {
     monies += card.CoinValue
   }
   // For now, only do 1 buy.
-  fmt.Printf("Coins: %d, Buys: %d", monies, turn.Buys)
+  done := false
+  for !done {
+    //selection := GetSelection(i)
+    //selected := BaseCards[options[selection]]
+    selected := p.Plan.Buy(monies, turn)
+    if selected.Name == "" {
+      done = true
+      break
+    }
+    if (selected.CoinPrice <= monies) {
+      turn.G.Stacks[selected.Name]--
+      p.Gain(selected)
+      done = true
+      fmt.Printf("Bought: %s\n", selected.Name)
+    } else {
+      fmt.Println("You don't have enough money for that card.")
+    }
+  }
+}
+
+func HumanAction() {
+
+}
+
+
+func BMSSelect(monies int, turn *Turn) Card {
+  var priority []string
+  if (turn.P.getAllCards().Count("Smithy") < 2) {
+    priority = []string{"Smithy", "Province", "Gold", "Silver", "Copper"}
+  } else {
+    priority = []string{ "Province", "Gold", "Silver", "Copper"}
+  }
+  for _, name := range priority {
+    if monies >= BaseCards[name].CoinPrice && turn.G.Stacks[name] > 0 {
+      return BaseCards[name]
+    }
+  }
+  return BaseCards["Copper"]
+}
+
+
+func RobotSelect(monies int, turn *Turn) Card {
+  priority := []string{ "Province", "Gold", "Silver", "Copper"}
+  for _, name := range priority {
+    if monies >= BaseCards[name].CoinPrice && turn.G.Stacks[name] > 0 {
+      return BaseCards[name]
+    }
+  }
+  return BaseCards["Copper"]
+}
+
+func HumanSelect(monies int, turn *Turn) Card {
+  fmt.Printf("Coins: %d, Buys: %d\n", monies, turn.Buys)
   fmt.Println("#  Name   Available    Price")
   i := 0
   options := []string{}
@@ -82,18 +158,8 @@ func (p *Player) DoBuyPhase(turn *Turn) {
       i++
     }
   }
-  done := false
-  for !done {
-    selection := GetSelection(i)
-    selected := BaseCards[options[selection]]
-    if (selected.CoinPrice <= monies) {
-      turn.G.Stacks[selected.Name]--
-      p.Gain(selected)
-      done = true
-    } else {
-      fmt.Println("You don't have enough money for that card.")
-    }
-  }
+  selection := GetSelection(i)
+  return BaseCards[options[selection]]
 }
 
 func (p *Player) DoActionPhase(turn *Turn) {
@@ -101,7 +167,7 @@ func (p *Player) DoActionPhase(turn *Turn) {
   played := Pile{}
   for ; turn.Actions > 0; {
     // Get all actions from hand
-    fmt.Printf("Actions Left: %d", turn.Actions)
+    fmt.Printf("Actions Left: %d\n", turn.Actions)
     p.PrintHand()
     actionCards := Pile{}
     for _, card := range p.Hand {
@@ -146,6 +212,22 @@ func GetSelection(opts int) int {
     fmt.Println(err)
   }
   return choice
+}
+
+func (p *Player) GetVictoryPoints() int {
+  vp := 0
+  for _, card := range p.getAllCards() {
+    vp += card.VictoryValue
+  }
+  return vp
+}
+
+func (p *Player) getAllCards() Pile {
+  allCards := Pile{}
+  allCards.AddAll(p.Hand)
+  allCards.AddAll(p.Discard)
+  allCards.AddAll(p.Deck)
+  return allCards
 }
 
 func (p *Player) String() string {
