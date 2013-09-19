@@ -2,8 +2,6 @@ package dominion
 
 import (
   "sort"
-  "fmt"
-
 )
 
 var BaseCards = map[string]Card{
@@ -57,7 +55,6 @@ func (g *Game) Play() {
       }
     }
   }
-  g.DetermineWinner()
 }
 
 func (g *Game) endCondition() bool {
@@ -97,13 +94,11 @@ func (c scoreSorter) Less(i, j int) bool {
 func (g *Game) DetermineWinner() []Score {
   scores := make([]Score, len(g.Players))
   for i, p := range g.Players {
-    scores[i] = Score{VP:p.GetVictoryPoints(), Turns:g.turns, Order:i}
+    scores[i] = Score{Name: p.Name, VP:p.GetVictoryPoints(), Turns:g.turns, Order:i}
   }
-  fmt.Println(scores)
   sort.Sort(&scoreSorter{ss:scores})
-  fmt.Println(scores)
-  for i, score := range scores {
-    score.Place = i
+  for i, _ := range scores {
+    scores[i].Place = len(scores) - i
   }
   return scores
 }

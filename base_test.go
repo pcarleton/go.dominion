@@ -18,4 +18,18 @@ func TestScoreSorter(t *testing.T) {
     t.Errorf("Order not as expected %+v", scores)
   }
 
+  for i, _ := range scores {
+    scores[i].Place = len(scores) - i
+  }
+
+  if scores[2].Place != 1 {
+    t.Errorf("Place not set correctly %v", scores)
+  }
 }
+
+
+func TestDetermineWinner(t *testing.T) {
+  
+
+}
+

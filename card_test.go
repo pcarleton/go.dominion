@@ -7,7 +7,7 @@ import (
 func TestStartingDeck(t *testing.T) {
   copperCount := 0
   estateCount := 0
-  for _, card := range(startingDeck()) {
+  for _, card := range(StartingDeck()) {
     if card.Name == "Copper" { copperCount++ }
     if card.Name == "Estate" { estateCount++ }
   }
@@ -21,7 +21,7 @@ func TestStartingDeck(t *testing.T) {
 
 func TestPop(t *testing.T) {
   var p Pile
-  p.Add(Copper)
+  p.Add(BaseCards["Copper"])
   if len(p) != 1 {
     t.Error("Didn't add card")
   }
@@ -32,8 +32,8 @@ func TestPop(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-  deck := startingDeck()
-  card := deck.Remove(Copper)
+  deck := StartingDeck()
+  card := deck.Remove(BaseCards["Copper"])
   if card.Name != "Copper" {
     t.Errorf("Removed %v instead of copper", card)
   }

@@ -4,18 +4,18 @@ import(
   "testing"
 )
 
-var emptyPlayer = Player{"empty", nil, nil, nil, nil}
+var emptyPlayer = Player{Name:"empty"}
 
 func TestGain(t *testing.T) {
-  expected := []Card{Copper}
-  emptyPlayer.Gain(Copper)
-  if emptyPlayer.Discard[0] != Copper || len(emptyPlayer.Discard) > 1 {
+  expected := []Card{BaseCards["Copper"]}
+  emptyPlayer.Gain(BaseCards["Copper"])
+  if emptyPlayer.Discard[0] != BaseCards["Copper"] || len(emptyPlayer.Discard) > 1 {
     t.Errorf("Expected: %v, but got %v", expected, emptyPlayer.Discard)
   }
 }
 
 func TestDraw(t *testing.T) {
-  player := Player{Name:"test", Deck:Pile{Estate, Estate}, Discard:Pile{Copper, Copper}}
+  player := Player{Name:"test", Deck:Pile{BaseCards["Estate"], BaseCards["Estate"]}, Discard:Pile{BaseCards["Copper"], BaseCards["Copper"]}}
 
   //First draw.
   player.Draw(1)
