@@ -1,7 +1,8 @@
 package dominion
 
 import (
-  //"fmt"
+  "sort"
+  "fmt"
 
 )
 
@@ -20,6 +21,7 @@ var BaseCards = map[string]Card{
 type Game struct {
   Players []*Player
   Stacks map[string] int
+  turns int
 }
 
 
@@ -34,19 +36,20 @@ func NewGame(p ...*Player) Game {
     "Smithy":10,
     "Village":10,
   }
+  return Game{Players:p, Stacks:stacks}
+}
+
+func (g *Game) Play() {
   // Deal out decks and draw first hand
-  for _, player := range p {
+  for _, player := range g.Players {
     player.Deck = StartingDeck()
     player.Hand = nil
     player.Discard = nil
     player.Deck.Shuffle()
     player.Draw(5)
   }
-  return Game{Players:p, Stacks:stacks}
-}
-
-func (g *Game) Play() {
   for !g.endCondition() {
+    g.turns++
     for _, p := range g.Players {
       p.PlayTurn(g)
       if g.endCondition() {
@@ -67,20 +70,42 @@ func (g *Game) endCondition() bool {
   return g.Stacks["Province"] == 0 || zeroCount >= 3
 }
 
-func (g *Game) DetermineWinner() Player {
-  maxPoints := 0
-  var winner Player
-  //fmt.Println("Final Scores")
-  for _, p := range g.Players {
-    vp := p.GetVictoryPoints()
-    //fmt.Printf("%s: %d\n", p.Name, vp)
-    if vp > maxPoints {
-      maxPoints = vp
-      winner = *p
-    }
+type Score struct {
+  Name string
+  Place int
+  VP int
+  Turns int
+  Order int
+}
+
+type scoreSorter struct {
+  ss []Score
+}
+
+func (c scoreSorter) Swap(i, j int) {
+  c.ss[i], c.ss[j] = c.ss[j], c.ss[i]
+}
+
+func (c scoreSorter) Len() int {
+  return len(c.ss)
+}
+
+func (c scoreSorter) Less(i, j int) bool {
+  return c.ss[i].VP < c.ss[j].VP
+}
+
+func (g *Game) DetermineWinner() []Score {
+  scores := make([]Score, len(g.Players))
+  for i, p := range g.Players {
+    scores[i] = Score{VP:p.GetVictoryPoints(), Turns:g.turns, Order:i}
   }
-  //fmt.Printf("Winner is %s\n", winner.Name)
-  return winner
+  fmt.Println(scores)
+  sort.Sort(&scoreSorter{ss:scores})
+  fmt.Println(scores)
+  for i, score := range scores {
+    score.Place = i
+  }
+  return scores
 }
 
 func StartingDeck() Pile {

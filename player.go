@@ -6,10 +6,12 @@ import (
 )
 
 type BuyFunc func(i int,t *Turn) Card
+type ActionFunc func(p Pile) Card
 
 type Strat struct {
   Name string
   Buy BuyFunc
+  Act ActionFunc
 }
 
 type Player struct {
@@ -21,10 +23,37 @@ type Player struct {
 }
 
 
+type GameGenerator struct {
+  sts []Strat
+}
 
-var HumanStrat = Strat{ Buy:HumanSelect }
-var BigMoneyStrat = Strat{ Buy:RobotSelect }
-var BMSStrat = Strat{ Buy:BMSSelect }
+func NewGameGenerator(ss ...Strat) GameGenerator {
+  return GameGenerator{ sts:ss}
+}
+
+func (s Strat) GetPlayer() *Player {
+  return &Player{Name:s.Name, Plan:s}
+}
+
+func (g *GameGenerator) Generate() Game {
+  //Rotate starting order
+  first := g.sts[0]
+  for i := 1; i < len(g.sts); i++ {
+    g.sts[i-1] = g.sts[i]
+  }
+  g.sts[len(g.sts)-1] = first
+
+  //Create players
+  ps := make([]*Player, len(g.sts))
+  for i, strat := range g.sts {
+    ps[i] = strat.GetPlayer()
+  }
+  return NewGame(ps...)
+}
+
+var HumanStrat = Strat{Name:"Human", Buy:HumanSelect, Act:HumanSelectAction }
+var BigMoneyStrat = Strat{Name:"BigMoney", Buy:RobotSelect }
+var BMSStrat = Strat{Name:"BigMoneySmith", Buy:BMSSelect, Act:DumbSelectAction}
 
 func NewHumanPlayer(name string) Player {
   return Player{Name: name, Plan: HumanStrat}
@@ -115,11 +144,6 @@ func (p *Player) DoBuyPhase(turn *Turn) {
   }
 }
 
-func HumanAction() {
-
-}
-
-
 func BMSSelect(monies int, turn *Turn) Card {
   var priority []string
   if (turn.P.getAllCards().Count("Smithy") < 2) {
@@ -162,6 +186,16 @@ func HumanSelect(monies int, turn *Turn) Card {
   return BaseCards[options[selection]]
 }
 
+
+func HumanSelectAction(actionCards Pile) Card {
+  fmt.Println("Select Action to play")
+  return SelectCard(actionCards)
+}
+
+func DumbSelectAction(actionCards Pile) Card {
+  return actionCards[0]
+}
+
 func (p *Player) DoActionPhase(turn *Turn) {
   fmt.Println("****Action Phase****")
   played := Pile{}
@@ -180,8 +214,7 @@ func (p *Player) DoActionPhase(turn *Turn) {
       return
     }
     // Choose an action.
-    fmt.Println("Select Action to play")
-    actionCard := SelectCard(actionCards)
+    actionCard := p.Plan.Act(actionCards)
     actionCard.playAction(turn)
     turn.Actions--
     played.Add(p.Hand.Remove(actionCard))

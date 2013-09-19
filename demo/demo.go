@@ -5,6 +5,7 @@ import (
   "fmt"
 )
 
+var trials = 1
 
 func main() {
   fmt.Println("Welcome to the Go Dominion Simulator")
@@ -13,25 +14,17 @@ func main() {
   p2 := dominion.NewRobotPlayer("Robot 2")
   p3 := dominion.NewBMSPlayer("BMS 3")
 
-  winCounts := map[string]int{}
   var g dominion.Game
-  for i := 0; i < 1000; i++ {
+  for i := 0; i < trials; i++ {
     g = dominion.NewGame(&p1, &p2, &p3)
     g.Play()
-    winCounts[g.DetermineWinner().Name]++
-
-    g = dominion.NewGame(&p3, &p1, &p2)
-    g.Play()
-    winCounts[g.DetermineWinner().Name]++
-
-    g = dominion.NewGame(&p2, &p3, &p1)
-    g.Play()
-    winCounts[g.DetermineWinner().Name]++
-  }
   fmt.Println("#####FINALS######")
+    fmt.Printf("%+v\n", g.DetermineWinner())
 
-  for p, count := range winCounts {
-    fmt.Printf("%s: %d\n", p, count)
   }
+}
+
+func RunGame(p1, p2, p3 dominion.Player, ch chan(string)) {
+  
 
 }
