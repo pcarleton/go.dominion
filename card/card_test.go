@@ -8,7 +8,7 @@ var GetStack func() Stack
 
 func init() {
 GetStack = func() Stack {
-  p := NewPile()
+  p := NewArrayStack()
   return &p
 }
 }
@@ -65,4 +65,39 @@ func TestDiscard(t *testing.T) {
   }
 }
 
+func BenchmarkStartArrayDeck(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    p := NewArrayStack()
+    p.Draw(5)
+  }
+}
 
+func BenchmarkStartCopyStack(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    p := NewCopyStack()
+    p.Draw(5)
+  }
+}
+
+
+func BenchmarkArrayStackGamePlay(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    p := NewArrayStack()
+    for j := 0; j < 20; j++ {
+      p.Draw(5)
+      p.Gain(&Copper)
+      p.DoDiscard(5)
+    }
+  }
+}
+
+func BenchmarkCopyStackGamePlay(b *testing.B) {
+  for i := 0; i < b.N; i++ {
+    p := NewCopyStack()
+    for j := 0; j < 20; j++ {
+      p.Draw(5)
+      p.Gain(&Copper)
+      p.DoDiscard(5)
+    }
+  }
+}
