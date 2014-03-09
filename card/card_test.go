@@ -61,7 +61,52 @@ func TestDiscard(t *testing.T) {
   p.Draw(5)
   p.DoDiscard(5)
   if !CheckPiles(p, 5, 0, 5) {
+    t.Logf("%+v", p)
     t.Error("Improper discard")
+  }
+}
+
+func TestCardSort(t *testing.T) {
+  want := CardSlice{&Copper, &Copper, &Estate, &Estate}
+  initial := CardSlice{&Estate, &Copper, &Estate, &Copper}
+
+  initial.Sort()
+  if initial.String() != want.String() {
+    t.Errorf("Not sorted properly: %v", initial)
+  }
+}
+
+func TestGetActions(t *testing.T) {
+  expected := CardSlice{&Village}
+  initial := CardSlice{&Copper, &Estate, &Village, &Estate}
+  got := initial.GetActions()
+  if got.String() != expected.String() {
+    t.Errorf("Didn't get action correctly: %v", got)
+  }
+}
+
+func TestRecycleDiscard(t *testing.T) {
+  p := NewArrayStack()
+  p.Draw(5)
+  p.DoDiscard(5)
+  p.Draw(5)
+  cardCounts := make(map[string]int)
+  for _, c := range p.Hand() {
+    cardCounts[c.Name]++
+  }
+  p.recycleDiscard()
+  if !CheckPiles(&p, 5, 5, 0) {
+    t.Logf("%+v", p)
+    t.Error("Wrong lengths.")
+  }
+  newCC := make(map[string]int)
+  for _, c := range p.Hand() {
+    cardCounts[c.Name]++
+  }
+  for key, val := range newCC {
+    if cardCounts[key] != val {
+      t.Error("Hand changed")
+    }
   }
 }
 

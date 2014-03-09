@@ -24,6 +24,7 @@ type Stack interface {
   DoDiscard(int)
   Draw(int) bool
   DiscardOne(string) bool
+  Use(string) bool
   Gain(*Card)
 }
 
@@ -50,16 +51,46 @@ func (cs CardSlice) String() string {
   return pretty
 }
 
+func (cs *CardSlice) Swap(i, j int) {
+  (*cs)[i], (*cs)[j] = (*cs)[j], (*cs)[i]
+}
+
+func (cs CardSlice) Less(i, j int) bool {
+  return cs[i].Type < cs[j].Type || cs[i].CoinPrice < cs[j].CoinPrice || cs[i].Name < cs[j].Name
+}
+
+func (cs *CardSlice) Len() int {
+  return len(*cs)
+}
+
+func (cs *CardSlice) Sort() {
+  sort.Sort(cs)
+}
+
+func (cs *CardSlice) GetActions() CardSlice {
+  cs.Sort()
+  actionIndex := 0
+  for i, c := range *cs {
+    if c.Type == ACTION {
+      actionIndex = i
+      break
+    }
+  }
+  return (*cs)[actionIndex:]
+}
+
+
 type ArrayStack struct {
   cards [100]*Card
   deck int
-  hand int
+  used int
   discard int
   size int
 }
 
-var Copper = Card{Name:"Copper"}
-var Estate = Card{Name:"Estate"}
+var Copper = Card{Name:"Copper", Type:TREASURE}
+var Estate = Card{Name:"Estate", Type:VICTORY}
+var Village = Card{Name:"Village", Type:ACTION}
 
 func NewArrayStack() ArrayStack {
   p := ArrayStack{cards:[100]*Card{&Copper, &Copper, &Copper, &Copper, &Copper,
@@ -74,6 +105,8 @@ func (p *ArrayStack) Deck() CardSlice {
   return p.cards[0:p.deck]
 }
 
+// 0|--deck--|--hand--|-used-|--discard--|size
+
 func (p *ArrayStack) Hand() CardSlice {
   return p.cards[p.deck:p.discard]
 }
@@ -87,6 +120,29 @@ func (p *ArrayStack) Gain(c *Card) {
   p.size++
 }
 
+func (p *ArrayStack) recycleDiscard() {
+  // Error catching for out of bounds.
+  defer func() {
+    if r := recover(); r != nil {
+      fmt.Printf("Deck: %d, Discard: %d, Size: %d\n", p.deck, p.discard, p.size)
+    }
+  }()
+
+  k := p.size - 1
+  for i := 0; i < p.discard && k > i; i++ {
+    p.cards[i], p.cards[k] = p.cards[k], p.cards[i]
+    k--
+  }
+  p.deck = p.size - p.discard
+  p.discard = p.size
+  deck := p.Deck()
+  deck.Shuffle()
+}
+
+func (p *ArrayStack) Use(cname string) bool {
+  return true
+}
+
 func (p *ArrayStack) Draw(count int) bool {
   if count > p.size - len(p.Hand()) {
     return false
@@ -98,18 +154,8 @@ func (p *ArrayStack) Draw(count int) bool {
   }
   // We've reached the end of the deck.
   // If we have still need cards, recycle discard
-  defer func() {
-    if r := recover(); r != nil {
-      fmt.Printf("Deck: %d, Discard: %d, Size: %d\n", p.deck, p.discard, p.size)
-
-    }
-  }()
   if (count != 0) {
-    copy(p.cards[p.size:p.size + len(p.Hand())], p.Hand())
-    p.deck = p.size - p.discard
-    copy(p.cards[0:p.deck], p.Discard())
-    copy(p.cards[p.deck:p.size], p.cards[p.size:p.size + p.discard])
-    p.discard = p.size
+    p.recycleDiscard()
   }
   for count > 0 && p.deck > 0 {
     count--
@@ -124,6 +170,15 @@ func (p *ArrayStack) DoDiscard(count int) {
 
 func (p *ArrayStack) swap(i, j int) {
   p.cards[i], p.cards[j] = p.cards[j], p.cards[i]
+}
+
+// Shuffles the pile of cards randomly.
+func (cs *CardSlice) Shuffle() {
+  for i := len(*cs) - 1; i > 0; i-- {
+    if j := r.Intn(i + 1); i != j {
+      cs.Swap(i, j)
+    }
+  }
 }
 
 
@@ -177,6 +232,7 @@ func (c *CopyStack) Draw(count int) bool {
       for _, _ = range c.discard {
         c.deck.Add(c.discard.Pop())
       }
+      c.deck.Shuffle()
     }
     c.hand.Add(c.deck.Pop())
   }

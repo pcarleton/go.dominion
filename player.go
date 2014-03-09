@@ -101,7 +101,7 @@ func (p *Player) DoDiscard(cards Pile) {
 }
 
 func (p *Player) PlayTurn(game *Game) {
-  fmt.Printf("#### %s ####\n", p.Name)
+  //fmt.Printf("#### %s ####\n", p.Name)
   t := Turn{P:p, G:game, Actions:1, Buys:1}  
   p.DoActionPhase(&t)
   p.DoBuyPhase(&t)
@@ -117,8 +117,8 @@ func (p *Player) PrintHand() {
 }
 
 func (p *Player) DoBuyPhase(turn *Turn) {
-  fmt.Println("****Buy Phase****")
-  p.PrintHand()
+  //fmt.Println("****Buy Phase****")
+  //p.PrintHand()
   monies := 0
   for _, card := range(p.Hand) {
     monies += card.CoinValue
@@ -137,9 +137,9 @@ func (p *Player) DoBuyPhase(turn *Turn) {
       turn.G.Stacks[selected.Name]--
       p.Gain(selected)
       done = true
-      fmt.Printf("Bought: %s\n", selected.Name)
+      //fmt.Printf("Bought: %s\n", selected.Name)
     } else {
-      fmt.Println("You don't have enough money for that card.")
+      //fmt.Println("You don't have enough money for that card.")
     }
   }
 }
@@ -197,12 +197,12 @@ func DumbSelectAction(actionCards Pile) Card {
 }
 
 func (p *Player) DoActionPhase(turn *Turn) {
-  fmt.Println("****Action Phase****")
+  //fmt.Println("****Action Phase****")
   played := Pile{}
   for ; turn.Actions > 0; {
     // Get all actions from hand
-    fmt.Printf("Actions Left: %d\n", turn.Actions)
-    p.PrintHand()
+    //fmt.Printf("Actions Left: %d\n", turn.Actions)
+    //p.PrintHand()
     actionCards := Pile{}
     for _, card := range p.Hand {
       if card.Type == ACTION {
@@ -210,7 +210,7 @@ func (p *Player) DoActionPhase(turn *Turn) {
       }
     }
     if actionCards.Len() == 0  {
-      fmt.Println("No actions to play.")
+      //fmt.Println("No actions to play.")
       return
     }
     // Choose an action.

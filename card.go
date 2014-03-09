@@ -83,12 +83,8 @@ func (p *Pile) Remove(target Card) Card {
 
 func (p *Pile) Swap(i, j int) {
   s := *p
-  //fmt.Printf("i: %d, j: %d\n", i, j)
-  //fmt.Printf("s[i]: %v, s[j] %v\n", s[i], s[j])
   s[i], s[j] = s[j], s[i]
-  //fmt.Printf("s[i]: %v, s[j] %v\n", s[i], s[j])
   *p = s
-  //fmt.Println(p)
 }
 
 func (p Pile) Less(i, j int) bool {
